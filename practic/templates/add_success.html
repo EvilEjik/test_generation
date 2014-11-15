@@ -1,0 +1,10 @@
+{% extends "test_generator_base.html" %}
+
+{% block content %}
+    {% load static %}
+    <h2>Практическое занятие успешно сформированно!</h2>
+    <table>
+        <tr><td><a href="/practic/">Вернуться к списку всех типов практических занятий</a></td></tr>
+        <tr><td><a href="/practic/"><img src ="{% static 'done.jpg' %}"/></a></td></tr>
+    </table>
+{% endblock %}

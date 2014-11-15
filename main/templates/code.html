@@ -1,0 +1,76 @@
+{% extends "test_generator_base.html" %}
+
+
+{% block head %}
+    <script type="text/javascript" src="{{ STATIC_URL }}js/src-noconflict/ace.js"  charset="utf-8"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script>
+        function get_result() {
+            $.ajax({
+                type:"POST",
+                url:'/code/',
+                 data: { 'code_text': editor.getValue() },
+                 success: function(data){
+                    $("#result").empty();
+                    $("#result").append("<h2>Результат:</h2>");
+                    if(data[0])
+                    {
+                        $("#result").append("<p>"+data[0]+"</p>");
+                    }
+                    else
+                    {
+                        $("#result").append("<p id='error'>"+data[1]+"</p>");
+                    }
+                }
+            });
+        }
+
+        {% load main_tags %}
+        {% add_protection %}
+    </script>
+
+{% endblock %}
+
+{% block content %}
+    <h1>Работа с кодом</h1>
+    <div class="my_container">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Code editor</h3>
+             </div>
+             <div class="panel-body">
+                <div name="text_editor" id="editor">def sort(l):
+    for i in range(len(l)):
+        minimum = l[i]
+        minimum_index = i
+        for j in range(i, len(l)):
+            if minimum > l[j]:
+                minimum = l[j]
+                minimum_index = j
+        temp = l[i]
+        l[i] = minimum
+        l[minimum_index] = temp
+    return l
+
+l = []
+for i in range(10,0,-1):
+    l.append(i)
+
+print(l)
+l = sort(l)
+print(l)</div>
+            </div>
+        </div>
+    </div>
+
+    <input type="submit" id="process_button"  value="Выполнить" />
+
+    <div id="result"></div>
+
+    <script>
+        var editor = ace.edit("editor");
+        editor.setTheme("ace/theme/monokai");
+        editor.getSession().setMode("ace/mode/python");
+    </script>
+
+{% endblock %}

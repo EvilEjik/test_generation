@@ -1,0 +1,36 @@
+{% extends "test_generator_base.html" %}
+
+
+{% block content %}
+    {% if request.user.id %}
+        <h2>Подготовка практических работ по разделам</h2>
+        {% load static %}
+        <table>
+            <tr>
+                <td>
+                    <img src ="{% static 'practic_1.png' %}"/>
+                </td>
+                <td>
+                    <a href="theory/">Теоретические задания</a>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <img src ="{% static 'practic_2.png' %}"/>
+                </td>
+                <td>
+                    <a href="sql/">SQL-задачи</a>
+                </td>
+            </tr><tr>
+                <td>
+                    <img src ="{% static 'practic_3.png' %}"/>
+                </td>
+                <td>
+                    <a href="matrix/">Работа с матрицами</a>
+                </td>
+            </tr>
+        </table>
+        {% else %}
+            <h2>Для работы с этой частью необходимо зарегестрироваться!</h2>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,38 @@
+﻿<!DOCTYPE HTML>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Генерация тестов {% block title %}{% endblock %}</title>
+        {% load static %}
+    <link rel="stylesheet" href="{% static 'css/makh_project.css' %}">
+    {% block head %}
+	{% endblock %}
+</head>
+
+    <body>
+        <div class="container">
+            <header>    
+                 <nav>
+                     <ul>
+                         <li><a href="/">Главная</a></li>
+                         <li><a href="/code/">Работа с кодом</a></li>
+                         <li><a href="/practic/solve/">Выполнение практических заданий</a></li>
+                          {% if request.user.id %}
+                              <li><a href="/practic/">Практический раздел</a></li>
+                              <li><a href="{% url 'userena_profile_detail' request.user.username %}">Личный кабинет</a></li>
+                         {% else %}
+                              <li><a href="/accounts/signin/">Личный кабинет</a></li>
+                        {% endif %}
+                     </ul>
+                  </nav>                   
+            </header>
+
+            <section>
+                {% block breadcrumbs %}Навигация по сайту:  <a href="/">Главная</a>{% endblock %}
+                <p></p>
+                <div id="content">
+	            {% block content %}
+	            {% endblock %}
+                </div>
+             </section>
+        </div>
+    </body>

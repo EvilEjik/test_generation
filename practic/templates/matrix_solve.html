@@ -1,0 +1,71 @@
+{% extends "test_generator_base.html" %}
+
+{% block head %}
+    <script type="text/javascript" src="{{ STATIC_URL }}js/src-noconflict/ace.js"  charset="utf-8"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+
+    <script>
+        {% load static %}
+        function get_result() {
+            var values = [];
+            {% for q in questions %}
+                values.push(editor{{ forloop.counter }}.getValue());
+            {%  endfor %}
+            $.ajax({
+                type:"POST",
+                url:'/practic/matrix_solve/{{ practical_lesson.id }}/',
+                data: {'values' : values},
+                success: function(data){
+                    $("#content").empty();
+                    $("#content").append("<h2>Результат: " + data['result'] + " / " + data['max'] +"</h2>");
+                    $("#content").append("<table id='result_table'><tr><th width='40%'>Ваш ответ</th><th width='40%'>Правильный ответ</th><th></th></tr></table>");
+
+                    $.each(data['results_dict'], function(key, value ) {
+                        var image = '';
+                        if (value[2] == false){
+                            image = "{% static 'uncheck.jpg' %}";
+                        }
+                        else{
+                            image = "{% static 'check.jpg' %}";
+                        }
+                        $("#result_table").append("<tr><td>" + value[0] + "</td><td>" + value[1] + "</td><td>" + '<img src="' + image +'">'+"</td></tr>");
+                    });
+                    $("#content").append("<h2><a href='/practic/solve/'>Вернуться к списку практических заданий</a></h2>");
+                }
+            });
+        }
+        {% load main_tags %}
+        {% add_protection %}
+
+    </script>
+
+{% endblock %}
+
+
+{% block content %}
+    <h1>{{ practical_lesson.name }}</h1>
+    {% for q in questions %}
+        <div class="my_container">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">{{ q.question_text }}</h3>
+            </div>
+            <div class="panel-body">
+                <div name="text_editor" id="editor{{ forloop.counter }}" class="my_editor">matrix={{ matrix_lesson.matrix }}
+</div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    <input type="submit" id="process_button" value="Отправить решения"/>
+
+
+    <script>
+    {% for q in questions %}
+        var editor{{ forloop.counter }} = ace.edit("editor{{ forloop.counter }}");
+        editor{{ forloop.counter }}.setTheme("ace/theme/monokai");
+        editor{{ forloop.counter }}.getSession().setMode("ace/mode/python");
+    {%  endfor %}
+
+    </script>
+{% endblock %}

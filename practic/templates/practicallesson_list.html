@@ -1,0 +1,19 @@
+{% extends "test_generator_base.html" %}
+
+{% block content %}
+    {% if user.id %}
+        <h2>Список всех практических заданий</h2>
+        <ul>
+            {% for lesson in practical_lessons %}
+            <h3><a href="{% url 'practical_lesson_detail' lesson.id %}"> {{ lesson.name }} </a></h3>
+            <p><b>{{lesson.date}}</b></p>
+            <p>{{lesson.description}}</p>
+            <hr>
+        {% endfor%}
+        </ul>
+    {% else %}
+        <h2>Для работы с практической частью Вы должны быть пользователем системы!</h2>
+        <a href="/accounts/signup/">Регистрация</a>
+        <a href="/accounts/signin/">Вход</a>
+    {% endif %}
+{% endblock %}

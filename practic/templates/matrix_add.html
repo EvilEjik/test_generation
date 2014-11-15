@@ -1,0 +1,13 @@
+{% extends "test_generator_base.html" %}
+
+{%  block head %}
+{% endblock %}
+
+{% block content %}
+    <h2>Создание практического занятия</h2>
+    <form method="post" action="">
+    {% csrf_token %}
+        {{ lesson_form.as_p}}
+        <input type="submit" value="Сохранить" />
+    </form>
+{% endblock %}
