@@ -1,5 +1,5 @@
 from django.core.urlresolvers import reverse
-from django.shortcuts import redirect, get_object_or_404, render
+from django.shortcuts import redirect, get_object_or_404, render, render_to_response
 from django.contrib.auth import authenticate, login, logout, REDIRECT_FIELD_NAME
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import PasswordChangeForm
@@ -27,10 +27,12 @@ from accounts.forms import EditProfileForm
 
 from guardian.decorators import permission_required_or_403
 
+from practic.models import PracticalLessonResult, PracticalLesson, MatrixQuestion, MatrixAnswer
 
 import datetime
 
 import warnings
+
 
 class ExtraContextTemplateView(TemplateView):
     """ Add extra context to a simple template view """
@@ -818,3 +820,32 @@ def profile_list(request, page=1, template_name='userena/profile_list.html',
                                    template_name=template_name,
                                    extra_context=extra_context,
                                    **kwargs)(request)
+
+
+def student_results(request, username):
+    user = request.user
+    if username != user.username:
+        return render_to_response('userena/user_results_list.html', {'error': True})
+    else:
+        results = []
+        pr_lesson_results = PracticalLessonResult.objects.filter(student=user)
+        for res in pr_lesson_results:
+            results.append([PracticalLesson.objects.get(id=res.practical_lesson.id).name, res])
+        return render_to_response('userena/user_results_list.html', {'results': results, 'user': user,
+                                                                  'error': False})
+
+
+def practical_lesson_result(request, username, practical_lesson_result_id):
+    user = request.user
+    if username != user.username:
+        return render_to_response('userena/practical_lesson_result.html', {'error': True})
+    else:
+        pr_lesson_result = PracticalLessonResult.objects.get(id=practical_lesson_result_id)
+        lesson = PracticalLesson.objects.get(id=pr_lesson_result.practical_lesson.id)
+        answers = []
+        questions = MatrixQuestion.objects.filter(lesson=pr_lesson_result)
+        for question in questions:
+            answer = MatrixAnswer.objects.get(question=question)
+            answers.append([question.answer, answer])
+        return render_to_response('userena/practical_lesson_result.html', {'answers' : answers, 'result' : pr_lesson_result,
+                                                                           'name' : lesson.name, 'error': False})

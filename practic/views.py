@@ -1,35 +1,35 @@
-from django.shortcuts import render, render_to_response, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponseRedirect
-from django.views.generic import ListView
+from django.views.generic import ListView, DetailView
 from django.http import HttpResponse
 import simplejson
 
 from datetime import datetime
-
-from practic.forms import TheoryPracticalLessonForm, TheoryQuestionFormSet, MatrixPracticalLessonForm
+from django.views.generic.edit import CreateView, UpdateView, DeleteView
+from practic.forms import TheoryPracticalLessonForm, TheoryPairFormSet, MatrixPracticalLessonForm
 from practic.models import *
 
-from main.views import  run_code
+from main.views import run_code
 from practic.matrix import matrix_preparation
+from practic.theory import theory_preparation
 
 
-def add_matrix_lesson(request):
-    if request.method == 'POST':
-        lesson_form = MatrixPracticalLessonForm(request.POST)
-        if lesson_form.is_valid():
-            lesson = lesson_form.save(commit=False)
-            lesson.professor = request.user
-            lesson.date = datetime.now()
-            lesson.save()
-            return HttpResponseRedirect('/practic/success')
-    else:
-        lesson_form = MatrixPracticalLessonForm()
-        return render(request, 'matrix_add.html', {'lesson_form': lesson_form})
+class MatrixLessonCreate(CreateView):
+    form_class = MatrixPracticalLessonForm
+    template_name = 'matrix_add.html'
+    success_url = '/practic/success/'
+
+    def form_valid(self, form):
+        lesson = form.save(commit=False)
+        lesson.professor = self.request.user
+        lesson.date = datetime.now()
+        lesson.save()
+        return redirect('/practic/success/')
 
 
 def add_theory_lesson(request):
     if request.method == 'POST':
-        formset = TheoryQuestionFormSet(request.POST)
+        formset = TheoryPairFormSet(request.POST)
         lesson_form = TheoryPracticalLessonForm(request.POST)
 
         if formset.is_valid() and lesson_form.is_valid():
@@ -44,7 +44,7 @@ def add_theory_lesson(request):
                 question.save()
             return HttpResponseRedirect('/practic/success')
     else:
-        formset = TheoryQuestionFormSet(queryset=TheoryQuestion.objects.none())
+        formset = TheoryPairFormSet(queryset=TheoryPair.objects.none())
         lesson_form = TheoryPracticalLessonForm()
         return render(request, 'theory_add.html', {'formset': formset, 'lesson_form': lesson_form})
 
@@ -52,6 +52,58 @@ def add_theory_lesson(request):
 class PracticalLessonList(ListView):
     model = PracticalLesson
     context_object_name = 'practical_lessons'
+    template_name = "practicallesson_list.html"
+
+
+class PracticalLessonDetail(DetailView):
+    model = PracticalLesson
+    context_object_name = 'practical_lesson'
+
+    def get_context_data(self, **kwargs):
+        practical_lesson = super(PracticalLessonDetail, self).get_object()
+        context = super(PracticalLessonDetail, self).get_context_data(**kwargs)
+        practical_lesson_result, created = PracticalLessonResult.objects.get_or_create(
+            practical_lesson=practical_lesson, student=self.request.user,
+            defaults={'date': datetime.now(), 'result': 0, 'max': 0})
+        practical_lesson_result.result = 0
+        practical_lesson_result.save()
+
+        try:
+            matrix_lesson = practical_lesson.matrixpracticallesson
+        except MatrixPracticalLesson.DoesNotExist:
+            try:
+                theory_lesson = practical_lesson.theorypracticallesson
+            except TheoryPracticalLesson.DoesNotExist:
+                print('sdsd')
+            else:
+                existed_theory_questions = TheoryQuestion.objects.filter(lesson=practical_lesson_result)
+                for question in existed_theory_questions:
+                    TheoryQuestionElement.objects.filter(question=question).delete()
+                existed_theory_questions.delete()
+
+                #Подготовка тестовых вопросов по теоретическим задачам для пр. занятия
+                theory_preparation(theory_lesson, practical_lesson_result)
+
+                questions_answers = {}
+                questions = TheoryQuestion.objects.filter(lesson=practical_lesson_result)
+                for question in questions:
+                    questions_answers[question] = TheoryQuestionElement.objects.filter(question=question)
+                self.template_name = 'theory_solve.html'
+                #context['theory_lesson'] = theory_lesson
+                context['questions_answers'] = questions_answers
+                return context
+
+        else:
+            MatrixQuestion.objects.filter(lesson=practical_lesson_result).delete()
+
+            #Подготовка тестовых вопросов по матрицам для пр. занятия
+            matrix_preparation(matrix_lesson, practical_lesson_result)
+
+            questions = MatrixQuestion.objects.filter(lesson=practical_lesson_result)
+            self.template_name = 'matrix_solve.html'
+            context['matrix_lesson'] = matrix_lesson
+            context['questions'] = questions
+            return context
 
 
 def matrix_solve(request, practical_lesson_id):
@@ -91,23 +143,5 @@ def matrix_solve(request, practical_lesson_id):
         return HttpResponse(simplejson.dumps(response_data), content_type="application/json")
 
 
-def practical_lesson_detail(request, practical_lesson_id):
-    practical_lesson = get_object_or_404(PracticalLesson, id=practical_lesson_id)
-    practical_lesson_result, created = PracticalLessonResult.objects.get_or_create(
-        practical_lesson=practical_lesson, student=request.user,
-        defaults={'date': datetime.now(), 'result': 0, 'max': 0})
-    practical_lesson_result.result = 0
-    practical_lesson_result.save()
-    if practical_lesson.matrixpracticallesson:
-        MatrixQuestion.objects.filter(lesson=practical_lesson_result).delete()
-        matrix_lesson = practical_lesson.matrixpracticallesson
-        matrix_preparation(matrix_lesson, practical_lesson_result)
-        questions = MatrixQuestion.objects.filter(lesson=practical_lesson_result)
-        return render(request, 'matrix_solve.html', {'practical_lesson': practical_lesson,
-                                          'matrix_lesson': matrix_lesson,
-                                          'questions': questions})
-
-    elif practical_lesson.theorypracticallesson:
-        print('sdsd')
-    else:
-        print('sdsd')
+def theory_solve(request, practical_lesson_id):
+    return render(request, 'practical_lesson_result.html')

@@ -61,13 +61,43 @@ class MatrixAnswer(models.Model):
 
 class TheoryPracticalLesson(PracticalLesson):
     choice_question = models.BooleanField("Вопросы с выбором ответа из списка", default=True)
-    sort_question = models.BooleanField("Вопросы на сортировку последовательности", default=True)
     compliance_question = models.BooleanField("Вопросы на соответствие", default=True)
     open_answer_question = models.BooleanField("Вопросы с открытым ответом", default=True)
 
 
-class TheoryQuestion(models.Model):
-    lesson = models.ForeignKey(TheoryPracticalLesson)
+class TheoryElement(models.Model):
     object = models.CharField(max_length=300)
     subject = models.CharField(max_length=300)
+
+    class Meta:
+        abstract = True
+
+
+class TheoryPair(TheoryElement):
+    lesson = models.ForeignKey(TheoryPracticalLesson)
     is_obligatory = models.BooleanField(default=True)
+
+
+class TheoryQuestion(models.Model):
+    lesson = models.ForeignKey(PracticalLessonResult)
+    question_type = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.question_type
+
+
+class TheoryQuestionElement(TheoryElement):
+    question = models.ForeignKey(TheoryQuestion)
+    is_fake = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.object
+
+
+class TheoryAnswer(models.Model):
+    question = models.ForeignKey(TheoryQuestion)
+    is_true = models.BooleanField(default=False)
+
+
+class TheoryAnswerElement(TheoryElement):
+    answer = models.ForeignKey(TheoryAnswer)

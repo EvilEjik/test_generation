@@ -7,7 +7,7 @@
     <h2>Создание практического занятия</h2>
     <form method="post" action="">
     {% csrf_token %}
-        {{ lesson_form.as_p}}
+        {{ form.as_p}}
         <input type="submit" value="Сохранить" />
     </form>
 {% endblock %}

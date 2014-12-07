@@ -1,0 +1,61 @@
+{% extends "test_generator_base.html" %}
+
+
+{% block head %}
+    <script>
+    function set_question(text, id) {
+        document.getElementById("question-"+id).innerHTML = text;
+    }
+    </script>
+{% endblock %}
+
+
+{% block content %}
+    <h1>{{ practical_lesson.name }}</h1>
+    <form method="post" action="{% url 'theory_solve' practical_lesson.id %}">
+
+    {% csrf_token %}
+
+    {% for question, elements in questions_answers.items %}
+        {% with question_id=forloop.counter %}
+            <p id="question-{{ question_id }}">id={{ question_id }}</p>
+
+            {% if question.question_type == 'choice' %}
+                {% for element in elements %}
+                    {% if element.is_fake == False %}
+                        <script>
+                            set_question("{{ element.object }}:", {{ question_id }})
+                        </script>
+                    {% endif %}
+                    <input type="radio" name="{{ question.id }}" value="{{ element.id }}"/>
+                    <label>{{ element.subject }}</label>
+                    <br />
+                {% endfor %}
+
+            {% elif question.question_type ==  'compliance' %}
+                <table>
+                {% for element in elements %}
+                    <tr>
+                        <td><p>{{ element.object }}</p></td>
+                        <td><input type="text" name="{{element.id }}"/></td>
+                        <td><p>{{ element.subject }}</p></td>
+                    </tr>
+                {% endfor %}
+                <script>
+                    set_question("Установите соответствие между элементами:", {{ question_id }})
+                </script>
+                </table>
+
+            {% elif question.question_type ==  'open_answer' %}
+                <script>
+                    set_question("{{ elements.0.subject }}:", {{ question_id }})
+                </script>
+                <input type="text" name="{{elements.1.id }}"/>
+            {% endif %}
+        {% endwith %}
+        <hr>
+    {% endfor %}
+    <input type="submit" id="process_button" value="Отправить решения"/>
+    </form>
+
+{% endblock %}

@@ -1,7 +1,7 @@
 from django.forms import ModelForm
 from django.forms.models import modelformset_factory
 
-from practic.models import TheoryPracticalLesson, TheoryQuestion, MatrixPracticalLesson
+from practic.models import TheoryPracticalLesson, TheoryPair, MatrixPracticalLesson
 
 
 class TheoryPracticalLessonForm(ModelForm):
@@ -10,9 +10,9 @@ class TheoryPracticalLessonForm(ModelForm):
         exclude = ['professor', 'date']
 
 
-class TheoryQuestionForm(ModelForm):
+class TheoryPairForm(ModelForm):
     class Meta:
-        model = TheoryQuestion
+        model = TheoryPair
         fields = ['object', 'subject', 'is_obligatory']
 
 
@@ -21,4 +21,4 @@ class MatrixPracticalLessonForm(ModelForm):
         model = MatrixPracticalLesson
         exclude = ['professor', 'date', 'matrix']
 
-TheoryQuestionFormSet = modelformset_factory(TheoryQuestion, exclude=('lesson',), extra=1)
+TheoryPairFormSet = modelformset_factory(TheoryPair, exclude=('lesson',), extra=1)
