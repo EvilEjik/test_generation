@@ -1,4 +1,4 @@
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import render, get_object_or_404, redirect, render_to_response, get_list_or_404
 from django.http import HttpResponseRedirect
 from django.views.generic import ListView, DetailView
 from django.http import HttpResponse
@@ -144,4 +144,53 @@ def matrix_solve(request, practical_lesson_id):
 
 
 def theory_solve(request, practical_lesson_id):
-    return render(request, 'practical_lesson_result.html')
+    if request.POST:
+        practical_lesson = get_object_or_404(PracticalLesson, id=practical_lesson_id)
+        practical_lesson_result = get_object_or_404(PracticalLessonResult, practical_lesson=practical_lesson)
+        questions = TheoryQuestion.objects.filter(lesson=practical_lesson_result)
+        practical_lesson_result.date = datetime.now()
+
+        for question in questions:
+            question_elements = TheoryQuestionElement.objects.filter(question=question, is_fake=False)
+            next_answer = TheoryAnswer.objects.create(question=question)
+
+            if question.question_type == 'open_answer':
+                next_element = TheoryAnswerElement.objects.create(answer=next_answer)
+                next_element.subject = request.POST.get(str(question.id))
+                next_element.save()
+                next_answer.max = 3
+
+                if question_elements[0].object.lower() == next_element.subject.lower():
+                    next_answer.result = 3
+
+            elif question.question_type == 'compliance':
+                next_answer.max = 3
+                for element in question_elements:
+                    next_element = TheoryAnswerElement.objects.create(answer=next_answer)
+                    next_element.subject = request.POST.get(str(element.id))
+                    next_element.save()
+
+                    if element.subject.lower() == next_element.subject.lower():
+                        next_answer.result += 1
+
+            elif question.question_type == 'choice':
+                next_element = TheoryAnswerElement.objects.create(answer=next_answer)
+                current_choice = request.POST.get(str(question.id))
+                if current_choice:
+                    next_element.subject = get_object_or_404(TheoryQuestionElement, id=current_choice).subject
+                else:
+                    next_element.subject = ''
+                next_element.save()
+                next_answer.max = 2
+
+                if question_elements[0].subject == next_element.subject:
+                    next_answer.result = 2
+
+            next_answer.save()
+
+        result = get_list_or_404(TheoryAnswer, question__in=questions)
+        practical_lesson_result.result = sum(r.result for r in result)
+        practical_lesson_result.max = sum(r.max for r in result)
+
+        practical_lesson_result.save()
+        return HttpResponseRedirect('/accounts/%s/%i/' % (str(request.user.username), practical_lesson_result.id))

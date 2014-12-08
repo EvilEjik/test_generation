@@ -7,7 +7,7 @@ from practic.models import TheoryPracticalLesson, TheoryPair, MatrixPracticalLes
 class TheoryPracticalLessonForm(ModelForm):
     class Meta:
         model = TheoryPracticalLesson
-        exclude = ['professor', 'date']
+        exclude = ['professor', 'date', 'max']
 
 
 class TheoryPairForm(ModelForm):
