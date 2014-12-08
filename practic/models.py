@@ -96,8 +96,13 @@ class TheoryQuestionElement(TheoryElement):
 
 class TheoryAnswer(models.Model):
     question = models.ForeignKey(TheoryQuestion)
-    is_true = models.BooleanField(default=False)
+    result = models.IntegerField(default=0)
+    max = models.IntegerField(default=0)
 
 
-class TheoryAnswerElement(TheoryElement):
+class TheoryAnswerElement(models.Model):
     answer = models.ForeignKey(TheoryAnswer)
+    subject = models.CharField(max_length=300)
+
+    def __str__(self):
+        return self.subject
