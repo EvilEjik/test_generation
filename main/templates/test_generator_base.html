@@ -16,12 +16,14 @@
                          <li><a href="/">Главная</a></li>
                          <li><a href="/code/">Работа с кодом</a></li>
                          <li><a href="/practic/solve/">Выполнение практических заданий</a></li>
-                          {% if request.user.id %}
-                              <li><a href="/practic/">Практический раздел</a></li>
-                              <li><a href="{% url 'userena_profile_detail' request.user.username %}">Личный кабинет</a></li>
+                         {% if request.user.is_staff %}
+                             <li><a href="/practic/">Практический раздел</a></li>
+                         {% endif %}
+                         {% if request.user.id %}
+                             <li><a href="{% url 'userena_profile_detail' request.user.username %}">Личный кабинет</a></li>
                          {% else %}
                               <li><a href="/accounts/signin/">Личный кабинет</a></li>
-                        {% endif %}
+                         {% endif %}
                      </ul>
                   </nav>                   
             </header>

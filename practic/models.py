@@ -28,12 +28,7 @@ class PracticalLessonResult(models.Model):
 
 
 class MatrixPracticalLesson(PracticalLesson):
-    DATA_TYPE_CHOICES = (
-        ('String', 'String'),
-        ('Numeral', 'Numeral'),
-    )
     number_of_questions = models.IntegerField("Количество вопросов", default=5)
-    data_type = models.CharField("Тип данных", max_length=10, choices=DATA_TYPE_CHOICES, default='String')
     matrix_traversal_question = models.BooleanField("Задачи на разные типы обхода матриц с выполнением действий",
                                                     default=True)
     search_value_question = models.BooleanField("Задачи на поиск элемента по значению", default=True)
@@ -106,3 +101,32 @@ class TheoryAnswerElement(models.Model):
 
     def __str__(self):
         return self.subject
+
+
+class SQLPracticalLesson(PracticalLesson):
+    number_of_questions = models.IntegerField("Количество вопросов", default=5)
+    write_query = models.BooleanField("Задачи на написание запроса", default=True)
+    error_search = models.BooleanField("Задачи на поиск ошибки в запросе", default=True)
+    result_output = models.BooleanField("Задачи на выдачу результата по запросу", default=True)
+
+
+class SQLTable(models.Model):
+    lesson = models.ForeignKey(SQLPracticalLesson)
+    table_name = models.CharField('Название таблицы', max_length=100)
+
+    def __str__(self):
+        return self.name
+
+
+class SQLField(models.Model):
+    DATA_TYPE_CHOICES = (('Varchar(255)', 'String'), ('Integer', 'Integer'),
+                         ('Boolean', 'Boolean'), ('Timestamp', 'Datetime'))
+
+    table = models.ForeignKey(SQLTable)
+    field_name = models.CharField(max_length=100)
+    data_type = models.CharField(choices=DATA_TYPE_CHOICES, max_length=100, default='Integer')
+    is_relative = models.BooleanField(default=False)
+    relation = models.CharField(max_length=100, )
+
+    def __str__(self):
+        return self.name

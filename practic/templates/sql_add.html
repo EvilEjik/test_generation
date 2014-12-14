@@ -1,0 +1,72 @@
+{% extends "test_generator_base.html" %}
+
+{%  block head %}
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.formset.js"  charset="utf-8"></script>
+    <script type="text/javascript">
+        $(function() {
+            $('#my_formset tr').formset();
+        })
+
+        function check(element)
+        {
+            var my_index = element.id.split('-')[1];
+            var my_id = 'id_form-' + my_index + '-relation';
+            if(element.checked == false)
+            {
+                document.getElementById(my_id).disabled = true;
+            }
+            else
+            {
+                document.getElementById(my_id).disabled = false;
+            }
+        }
+    </script>
+{% endblock %}
+
+{% block content %}
+    <h2>Создание практического занятия</h2>
+    <form method="post" action="">
+    {% csrf_token %}
+        <table>
+            <tr>
+                <td style="width: 40%">
+                    <h3>Введите параметры занятия</h3>
+                    {{ lesson_form.as_p}}</td>
+                <td style="vertical-align: top; width: 60%">
+                     <h3>Постройте структуру таблицы</h3>
+                    {{ table_form.as_p}}
+                    <table border="0" cellpadding="0" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <td>
+                                    Название
+                                </td>
+                                <td>
+                                    Тип данных
+                                </td>
+                                <td>
+                                    Связь с полем другой таблицы
+                                </td>
+                            </tr>
+                        </thead>
+                        <tbody id="my_formset">
+                            {% for form in field_formset.forms %}
+                                <tr>
+                                    <td>{{ form.field_name }}</td>
+                                    <td>{{ form.data_type }}</td>
+                                    <td>{{ form.is_relative }}
+                                        {{ form.relation }}</td>
+                                <td></td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {{ field_formset.management_form }}
+                <input type="submit" value="Добавить еще таблицу" name="_one_more"/>
+                <input type="submit" value="Сохранить практическое занятие" name="_finish"/>
+                </td>
+            </tr>
+        </table>
+     </form>
+{% endblock %}

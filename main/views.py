@@ -7,22 +7,22 @@ import subprocess
 import os
 
 
-def index(request):
-    return render_to_response('index.html',  context_instance=RequestContext(request))
-
-
 def run_code(file_name, text):
-    f = open(file_name, 'w+')
-    f.write(text)
-    f.close()
-    sub_process = subprocess.Popen(["python", file_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    try:
-        output, err = sub_process.communicate(timeout=10)
-    except subprocess.TimeoutExpired:
-        sub_process.kill()
-        output = ""
-        err = "TimeoutExpired"
-    os.remove(file_name)
+    if 'import' in text:
+        output = ''
+        err = 'Using import is not allowed!'
+    else:
+        f = open(file_name, 'w+')
+        f.write(text)
+        f.close()
+        sub_process = subprocess.Popen(["python", file_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        try:
+            output, err = sub_process.communicate(timeout=10)
+        except subprocess.TimeoutExpired:
+            sub_process.kill()
+            output = ""
+            err = "TimeoutExpired"
+        os.remove(file_name)
     return output, err
 
 

@@ -1,0 +1,43 @@
+{% extends "test_generator_base.html" %}
+
+
+{% block head %}
+    <script type="text/javascript" src="{{ STATIC_URL }}js/src-noconflict/ace.js"  charset="utf-8"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script>
+        function get_result() {
+            $.ajax({
+                type:"POST",
+                url:'/practic/sql/add_data/',
+                 data: { 'code_text': editor.getValue() },
+                 success: function(data){
+                     window.location.href = data;
+                }
+            });
+        }
+
+        {% load main_tags %}
+        {% add_protection %}
+    </script>
+{% endblock %}
+
+{% block content %}
+    <h2>Добавление данных в таблицы практического занятия</h2>
+    <div class="my_container">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Создайте скрипт для выполнения:</h3>
+            </div>
+            <div class="panel-body">
+                <div name="text_editor" id="editor" class="my_editor"></div>
+            </div>
+        </div>
+    </div>
+    <input type="submit" id="process_button"  value="Внести данные в таблицы" />
+
+    <script>
+        var editor = ace.edit("editor");
+        editor.setTheme("ace/theme/clouds");
+        editor.getSession().setMode("ace/mode/sql");
+    </script>
+{% endblock %}

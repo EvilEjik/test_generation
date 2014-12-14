@@ -1,17 +1,26 @@
-from django.shortcuts import render, get_object_or_404, redirect, render_to_response, get_list_or_404
+from django.shortcuts import render, get_object_or_404, redirect, get_list_or_404
 from django.http import HttpResponseRedirect
 from django.views.generic import ListView, DetailView
 from django.http import HttpResponse
 import simplejson
+from django.db import connection
 
 from datetime import datetime
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
-from practic.forms import TheoryPracticalLessonForm, TheoryPairFormSet, MatrixPracticalLessonForm
+from practic.forms import TheoryPracticalLessonForm, TheoryPairFormSet, MatrixPracticalLessonForm, \
+    SQLPracticalLessonForm, SQLTableForm, SQLFieldFormSet
+
 from practic.models import *
 
 from main.views import run_code
 from practic.matrix import matrix_preparation
 from practic.theory import theory_preparation
+
+
+class PracticalLessonList(ListView):
+    model = PracticalLesson
+    context_object_name = 'practical_lessons'
+    template_name = "practicallesson_list.html"
 
 
 class MatrixLessonCreate(CreateView):
@@ -28,9 +37,9 @@ class MatrixLessonCreate(CreateView):
 
 
 def add_theory_lesson(request):
+    lesson_form = TheoryPracticalLessonForm(request.POST or None)
     if request.method == 'POST':
         formset = TheoryPairFormSet(request.POST)
-        lesson_form = TheoryPracticalLessonForm(request.POST)
 
         if formset.is_valid() and lesson_form.is_valid():
             lesson = lesson_form.save(commit=False)
@@ -42,17 +51,76 @@ def add_theory_lesson(request):
                 question = form.save(commit=False)
                 question.lesson = lesson
                 question.save()
-            return HttpResponseRedirect('/practic/success')
+            return HttpResponseRedirect('/practic/success/')
     else:
         formset = TheoryPairFormSet(queryset=TheoryPair.objects.none())
-        lesson_form = TheoryPracticalLessonForm()
-        return render(request, 'theory_add.html', {'formset': formset, 'lesson_form': lesson_form})
+        return render(request, 'theory_add.html', {'formset': formset,
+                                                   'lesson_form': lesson_form})
 
 
-class PracticalLessonList(ListView):
-    model = PracticalLesson
-    context_object_name = 'practical_lessons'
-    template_name = "practicallesson_list.html"
+def run_sql(query):
+    if 'insert' in query.lower() or 'update' in query.lower() or 'delete' in query.lower() or 'drop' in query.lower():
+        print('Error!')
+    else:
+        cursor = connection.cursor()
+        cursor.execute(query)
+
+
+def add_sql_lesson(request):
+    lesson_form = SQLPracticalLessonForm(request.POST or None)
+    table_form = SQLTableForm(request.POST or None)
+    field_formset = SQLFieldFormSet(request.POST or None)
+    if request.method == 'POST':
+        if field_formset.is_valid() and lesson_form.is_valid() and lesson_form.is_valid():
+            lesson = SQLPracticalLesson.objects.filter(name=lesson_form.cleaned_data['name'])
+
+            if not lesson:
+                lesson = lesson_form.save(commit=False)
+                lesson.professor = request.user
+                lesson.date = datetime.now()
+                lesson.save()
+            else:
+                lesson = lesson[0]
+
+            table = table_form.save(commit=False)
+            table.lesson = lesson
+            table.save()
+
+            for form in field_formset:
+                field = form.save(commit=False)
+                field.table = table
+                field.save()
+
+            if '_one_more' in request.POST:
+                table_form = SQLTableForm()
+                field_formset = SQLFieldFormSet()
+                return render(request, 'sql_add.html', {'lesson_form': lesson_form,
+                                                        'field_formset': field_formset,
+                                                        'table_form': table_form})
+
+            elif '_finish' in request.POST:
+                for table in SQLTable.objects.filter(lesson=lesson):
+                    query = ''
+                    query += 'CREATE TABLE ' + table.table_name + ' ('
+                    for field in SQLField.objects.filter(table=table):
+                        query += ' ' + field.field_name + ' ' + field.data_type + ', '
+                    query = query[0:-2]
+                    query += ' );'
+                    run_sql(query)
+                return HttpResponseRedirect('/practic/sql/add_data/')
+    else:
+        return render(request, 'sql_add.html', {'lesson_form': lesson_form,
+                                                'field_formset': field_formset,
+                                                'table_form': table_form})
+
+
+def sql_add_data(request):
+    if request.method == 'POST':
+        cursor = connection.cursor()
+        cursor.execute(request.POST['code_text'])
+        return HttpResponse(simplejson.dumps('/practic/success/'), content_type="application/json")
+    else:
+        return render(request, 'sql_data_add.html')
 
 
 class PracticalLessonDetail(DetailView):
