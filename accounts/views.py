@@ -27,7 +27,7 @@ from accounts.forms import EditProfileForm
 
 from guardian.decorators import permission_required_or_403
 
-from practic.models import PracticalLessonResult, PracticalLesson, MatrixQuestion, MatrixAnswer, MatrixPracticalLesson,\
+from practic.models import PracticalLessonResult, PracticalLesson, CodeQuestion, CodeAnswer, MatrixPracticalLesson,\
     TheoryPracticalLesson, TheoryAnswer, TheoryAnswerElement, TheoryQuestion, TheoryQuestionElement
 
 import datetime
@@ -845,40 +845,33 @@ def practical_lesson_result(request, username, practical_lesson_result_id):
         practical_lesson = PracticalLesson.objects.get(id=practical_lesson_res.practical_lesson.id)
         answers = []
         try:
-            matrix_lesson = practical_lesson.matrixpracticallesson
-        except MatrixPracticalLesson.DoesNotExist:
-            try:
-                theory_lesson = practical_lesson.theorypracticallesson
-            except TheoryPracticalLesson.DoesNotExist:
-                print('sdsd')
-            else:
-                questions = TheoryQuestion.objects.filter(lesson=practical_lesson_res)
-                for question in questions:
-                    current_answer = get_object_or_404(TheoryAnswer, question=question)
-                    answer_elements = TheoryAnswerElement.objects.filter(answer=current_answer)
-                    question_elements = TheoryQuestionElement.objects.filter(question=question, is_fake=False)
-                    if question.question_type == 'compliance':
-                        compliance_answers = ''
-                        compliance_questions = ''
-                        for (index, answ_element) in enumerate(answer_elements[::-1]):
-                            compliance_answers += answ_element.subject + '\n'
-                            compliance_questions += question_elements[index].subject + '\n'
-                        my_answer = compliance_answers
-                        correct_answer = compliance_questions
-                    elif question.question_type == 'choice':
-                        my_answer = answer_elements[0].subject
-                        correct_answer = question_elements[0].subject
-                    elif question.question_type == 'open_answer':
-                        my_answer = answer_elements[0].subject
-                        correct_answer = question_elements[0].object
-                    answers.append([my_answer, correct_answer, current_answer.result, current_answer.max])
-        else:
-            questions = MatrixQuestion.objects.filter(lesson=practical_lesson_res)
+            theory_lesson = practical_lesson.theorypracticallesson
+        except TheoryPracticalLesson.DoesNotExist:
+            questions = CodeQuestion.objects.filter(lesson=practical_lesson_res)
             for question in questions:
-                answer = MatrixAnswer.objects.get(question=question)
+                answer = CodeAnswer.objects.get(question=question)
                 answers.append([answer.result, question.answer, answer.is_true])
-
-
+        else:
+            questions = TheoryQuestion.objects.filter(lesson=practical_lesson_res)
+            for question in questions:
+                current_answer = get_object_or_404(TheoryAnswer, question=question)
+                answer_elements = TheoryAnswerElement.objects.filter(answer=current_answer)
+                question_elements = TheoryQuestionElement.objects.filter(question=question, is_fake=False)
+                if question.question_type == 'compliance':
+                    compliance_answers = ''
+                    compliance_questions = ''
+                    for (index, answ_element) in enumerate(answer_elements[::-1]):
+                        compliance_answers += answ_element.subject + '\n'
+                        compliance_questions += question_elements[index].subject + '\n'
+                    my_answer = compliance_answers
+                    correct_answer = compliance_questions
+                elif question.question_type == 'choice':
+                    my_answer = answer_elements[0].subject
+                    correct_answer = question_elements[0].subject
+                elif question.question_type == 'open_answer':
+                    my_answer = answer_elements[0].subject
+                    correct_answer = question_elements[0].object
+                answers.append([my_answer, correct_answer, current_answer.result, current_answer.max])
         return render_to_response('userena/practical_lesson_result.html', {'answers' : answers,
                                                                            'result' : practical_lesson_res,
                                                                            'name' : practical_lesson.name,

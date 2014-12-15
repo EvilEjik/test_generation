@@ -4,7 +4,7 @@ from django.views.generic import TemplateView
 from django.contrib import admin
 admin.autodiscover()
 
-from practic.views import add_theory_lesson, PracticalLessonList, matrix_solve, theory_solve, \
+from practic.views import add_theory_lesson, PracticalLessonList, code_solve, theory_solve, \
     MatrixLessonCreate, PracticalLessonDetail, add_sql_lesson, sql_add_data
 
 
@@ -17,6 +17,6 @@ urlpatterns = patterns('',
     url(r'^success/', TemplateView.as_view(template_name="add_success.html")),
     url(r'^solve/$', PracticalLessonList.as_view()),
     url(r'^solve/(?P<pk>\d+)/$', PracticalLessonDetail.as_view(), name='practical_lesson_detail'),
-    url(r'^matrix_solve/(?P<practical_lesson_id>\d+)/$', matrix_solve),
+    url(r'^code_solve/(?P<practical_lesson_id>\d+)/$', code_solve),
     url(r'^theory_solve/(?P<practical_lesson_id>\d+)/$', theory_solve, name='theory_solve'),
 )

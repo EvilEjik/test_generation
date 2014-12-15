@@ -6,15 +6,16 @@ import simplejson
 from django.db import connection
 
 from datetime import datetime
-from django.views.generic.edit import CreateView, UpdateView, DeleteView
+from django.views.generic.edit import CreateView
 from practic.forms import TheoryPracticalLessonForm, TheoryPairFormSet, MatrixPracticalLessonForm, \
     SQLPracticalLessonForm, SQLTableForm, SQLFieldFormSet
 
 from practic.models import *
 
-from main.views import run_code
+from main.views import run_code, run_sql
 from practic.matrix import matrix_preparation
 from practic.theory import theory_preparation
+from practic.sql import sql_preparation
 
 
 class PracticalLessonList(ListView):
@@ -56,14 +57,6 @@ def add_theory_lesson(request):
         formset = TheoryPairFormSet(queryset=TheoryPair.objects.none())
         return render(request, 'theory_add.html', {'formset': formset,
                                                    'lesson_form': lesson_form})
-
-
-def run_sql(query):
-    if 'insert' in query.lower() or 'update' in query.lower() or 'delete' in query.lower() or 'drop' in query.lower():
-        print('Error!')
-    else:
-        cursor = connection.cursor()
-        cursor.execute(query)
 
 
 def add_sql_lesson(request):
@@ -136,70 +129,91 @@ class PracticalLessonDetail(DetailView):
         practical_lesson_result.result = 0
         practical_lesson_result.save()
 
+        #Определяем тип практического занятия
         try:
-            matrix_lesson = practical_lesson.matrixpracticallesson
-        except MatrixPracticalLesson.DoesNotExist:
+            theory_lesson = practical_lesson.theorypracticallesson
+        except TheoryPracticalLesson.DoesNotExist:
+            CodeQuestion.objects.filter(lesson=practical_lesson_result).delete()
+
             try:
-                theory_lesson = practical_lesson.theorypracticallesson
-            except TheoryPracticalLesson.DoesNotExist:
-                print('sdsd')
+                matrix_lesson = practical_lesson.matrixpracticallesson
+            except MatrixPracticalLesson.DoesNotExist:
+                #Подготовка тестовых вопросов по таблицам для практического занятия
+                sql_preparation(practical_lesson.sqlpracticallesson, practical_lesson_result)
+                self.template_name = 'sql_solve.html'
+                tables_fields = {}
+                tables = SQLTable.objects.filter(lesson=practical_lesson.sqlpracticallesson)
+                for table in tables:
+                    cursor = connection.cursor()
+                    cursor.execute("SELECT * FROM " + table.table_name + ';')
+                    tables_fields[table.table_name] = [SQLField.objects.filter(table=table), cursor.fetchall()]
+                context['tables_fields'] = tables_fields
             else:
-                existed_theory_questions = TheoryQuestion.objects.filter(lesson=practical_lesson_result)
-                for question in existed_theory_questions:
-                    TheoryQuestionElement.objects.filter(question=question).delete()
-                existed_theory_questions.delete()
+                #Подготовка тестовых вопросов по матрицам для практического занятия
+                matrix_preparation(matrix_lesson, practical_lesson_result)
+                self.template_name = 'matrix_solve.html'
+                context['matrix_lesson'] = matrix_lesson
 
-                #Подготовка тестовых вопросов по теоретическим задачам для пр. занятия
-                theory_preparation(theory_lesson, practical_lesson_result)
-
-                questions_answers = {}
-                questions = TheoryQuestion.objects.filter(lesson=practical_lesson_result)
-                for question in questions:
-                    questions_answers[question] = TheoryQuestionElement.objects.filter(question=question)
-                self.template_name = 'theory_solve.html'
-                #context['theory_lesson'] = theory_lesson
-                context['questions_answers'] = questions_answers
-                return context
+            questions = CodeQuestion.objects.filter(lesson=practical_lesson_result)
+            context['questions'] = questions
 
         else:
-            MatrixQuestion.objects.filter(lesson=practical_lesson_result).delete()
+            existed_theory_questions = TheoryQuestion.objects.filter(lesson=practical_lesson_result)
+            for question in existed_theory_questions:
+                TheoryQuestionElement.objects.filter(question=question).delete()
+            existed_theory_questions.delete()
 
-            #Подготовка тестовых вопросов по матрицам для пр. занятия
-            matrix_preparation(matrix_lesson, practical_lesson_result)
+            #Подготовка тестовых вопросов по теоретическим задачам для практического занятия
+            theory_preparation(theory_lesson, practical_lesson_result)
 
-            questions = MatrixQuestion.objects.filter(lesson=practical_lesson_result)
-            self.template_name = 'matrix_solve.html'
-            context['matrix_lesson'] = matrix_lesson
-            context['questions'] = questions
-            return context
+            questions_answers = {}
+            questions = TheoryQuestion.objects.filter(lesson=practical_lesson_result)
+            for question in questions:
+                questions_answers[question] = TheoryQuestionElement.objects.filter(question=question)
+            self.template_name = 'theory_solve.html'
+            context['questions_answers'] = questions_answers
+        return context
 
 
-def matrix_solve(request, practical_lesson_id):
+def code_solve(request, practical_lesson_id):
     if request.POST:
         answers_list = request.POST.getlist('values[]')
 
         practical_lesson = get_object_or_404(PracticalLesson, id=practical_lesson_id)
         practical_lesson_result = get_object_or_404(PracticalLessonResult, practical_lesson=practical_lesson)
-        questions = MatrixQuestion.objects.filter(lesson=practical_lesson_result)
+        questions = CodeQuestion.objects.filter(lesson=practical_lesson_result)
         practical_lesson_result.max = questions.count()
         practical_lesson_result.date = datetime.now()
         results_dict = dict()
 
         for (index, answer_text) in enumerate(answers_list):
-            next_answer, created = MatrixAnswer.objects.get_or_create(
+            next_answer, created = CodeAnswer.objects.get_or_create(
                 question=questions[index], defaults={'answer': answer_text, 'is_true': False, 'result': ""})
 
-            file_name = request.COOKIES['csrftoken'] + '.py'
-            output, err = run_code(file_name, answer_text)
-            if output:
-                next_answer.result = (output.decode()).rstrip()
+            try:
+                matrix_lesson = practical_lesson.matrixpracticallesson
+            except MatrixPracticalLesson.DoesNotExist:
+                if questions[index].question_text[:2] == 'По':
+                    next_answer.result = answer_text
+                else:
+                    next_answer.result = run_sql(answer_text, True)
+                if str(next_answer.result) == questions[index].answer:
+                    next_answer.is_true = True
+                    practical_lesson_result.result += 1
+                    next_answer.save()
+                    results_dict[index] = [next_answer.result, questions[index].answer, next_answer.is_true]
             else:
-                next_answer.result = err
-            if next_answer.result == questions[index].answer.rstrip():
-                next_answer.is_true = True
-                practical_lesson_result.result += 1
-            next_answer.save()
-            results_dict[index] = [next_answer.result, questions[index].answer, next_answer.is_true]
+                file_name = request.COOKIES['csrftoken'] + '.py'
+                output, err = run_code(file_name, answer_text)
+                if output:
+                    next_answer.result = (output.decode()).rstrip()
+                else:
+                    next_answer.result = err
+                if next_answer.result == questions[index].answer.rstrip():
+                    next_answer.is_true = True
+                    practical_lesson_result.result += 1
+                next_answer.save()
+                results_dict[index] = [next_answer.result, questions[index].answer, next_answer.is_true]
 
         practical_lesson_result.save()
 

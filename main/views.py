@@ -1,7 +1,8 @@
-from django.shortcuts import render, render_to_response
+from django.shortcuts import render
 import simplejson
 from django.http import HttpResponse
 from django.template import RequestContext
+from django.db import connection
 
 import subprocess
 import os
@@ -34,3 +35,17 @@ def code_edit(request):
         return HttpResponse(simplejson.dumps([output, err]), content_type="application/json")
     else:
         return render(request, 'code.html', context_instance=RequestContext(request))
+
+
+def run_sql(query, return_answer=False):
+    if 'insert' in query.lower() or 'update' in query.lower() or 'delete' in query.lower() or 'drop' in query.lower():
+        print('Error!')
+    else:
+        cursor = connection.cursor()
+        try:
+            cursor.execute(query)
+        except:
+            return False
+        else:
+            if return_answer:
+                return cursor.fetchall()

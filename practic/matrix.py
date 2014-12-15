@@ -1,7 +1,7 @@
 from itertools import cycle
 from random import randint, random
 
-from practic.models import MatrixQuestion
+from practic.models import CodeQuestion
 from main.views import run_code
 
 
@@ -29,7 +29,7 @@ def matrix_preparation(matrix_lesson, practical_lesson_result):
     matrix_lesson.save()
     for i in range(matrix_lesson.number_of_questions):
         current = next(cycled_question_list)
-        matrix_question = MatrixQuestion.objects.create(lesson=practical_lesson_result)
+        matrix_question = CodeQuestion.objects.create(lesson=practical_lesson_result)
 
         #Вопросы с поиском наибольшего/наименьшего элемента в матрице и его координат
         if current == 'search':

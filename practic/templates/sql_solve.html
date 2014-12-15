@@ -44,6 +44,31 @@
 
 {% block content %}
     <h1>{{ practical_lesson.name }}</h1>
+    {% for table_name, fields in tables_fields.items %}
+        <table border="1" style="width:100%">
+        <caption>Название таблицы: {{ table_name }}</caption>
+            <thead>
+                <tr>
+                    {% for field in fields.0 %}
+                        <td>{{ field.field_name }}
+                            {% if field.is_relative %}
+                                ({{ field.relation }})
+                            {% endif %}
+                        </td>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+            {% for row in fields.1 %}
+                <tr>
+                {% for column in row %}
+                    <td>{{ column }}</td>
+                {% endfor %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endfor %}
     {% for q in questions %}
         <div class="my_container">
         <div class="panel panel-default">
@@ -51,8 +76,7 @@
                 <h3 class="panel-title">{{ q.question_text }}</h3>
             </div>
             <div class="panel-body">
-                <div name="text_editor" id="editor{{ forloop.counter }}" class="my_editor">matrix={{ matrix_lesson.matrix }}
-</div>
+                <div name="text_editor" id="editor{{ forloop.counter }}" class="my_editor"></div>
             </div>
         </div>
     </div>
@@ -63,8 +87,8 @@
     <script>
     {% for q in questions %}
         var editor{{ forloop.counter }} = ace.edit("editor{{ forloop.counter }}");
-        editor{{ forloop.counter }}.setTheme("ace/theme/monokai");
-        editor{{ forloop.counter }}.getSession().setMode("ace/mode/python");
+        editor{{ forloop.counter }}.setTheme("ace/theme/clouds");
+        editor{{ forloop.counter }}.getSession().setMode("ace/mode/sql");
     {%  endfor %}
 
     </script>

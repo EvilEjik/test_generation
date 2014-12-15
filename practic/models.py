@@ -37,9 +37,9 @@ class MatrixPracticalLesson(PracticalLesson):
     matrix = models.TextField()
 
 
-class MatrixQuestion(models.Model):
+class CodeQuestion(models.Model):
     lesson = models.ForeignKey(PracticalLessonResult)
-    question_text = models.CharField(max_length=300)
+    question_text = models.CharField(max_length=1000)
     question_code = models.TextField()
     answer = models.TextField()
 
@@ -47,8 +47,8 @@ class MatrixQuestion(models.Model):
         return self.question_text
 
 
-class MatrixAnswer(models.Model):
-    question = models.ForeignKey(MatrixQuestion)
+class CodeAnswer(models.Model):
+    question = models.ForeignKey(CodeQuestion)
     answer = models.TextField()
     result = models.TextField()
     is_true = models.BooleanField(default=False)
@@ -115,18 +115,18 @@ class SQLTable(models.Model):
     table_name = models.CharField('Название таблицы', max_length=100)
 
     def __str__(self):
-        return self.name
+        return self.table_name
 
 
 class SQLField(models.Model):
     DATA_TYPE_CHOICES = (('Varchar(255)', 'String'), ('Integer', 'Integer'),
-                         ('Boolean', 'Boolean'), ('Timestamp', 'Datetime'))
+                         ('Boolean', 'Boolean'))
 
     table = models.ForeignKey(SQLTable)
     field_name = models.CharField(max_length=100)
     data_type = models.CharField(choices=DATA_TYPE_CHOICES, max_length=100, default='Integer')
     is_relative = models.BooleanField(default=False)
-    relation = models.CharField(max_length=100, )
+    relation = models.CharField(max_length=100)
 
     def __str__(self):
-        return self.name
+        return self.field_name

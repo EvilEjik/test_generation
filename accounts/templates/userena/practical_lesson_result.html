@@ -3,21 +3,21 @@
 {% block head %}
     {% load static %}
     <script>
-            function set_result(result, id, max_res)
+        function set_result(result, id, max_res)
+        {
+            if (result)
             {
-                if (result)
-                {
-                    document.getElementById("image-"+id).src = "{% static 'check.jpg' %}";
-                }
-                else
-                {
-                    document.getElementById("image-"+id).src = "{% static 'uncheck.jpg' %}";
-                }
-                if(result != true && result != false)
-                {
-                    document.getElementById("p-"+id).innerHTML = String(result) + '/' + String(max_res);
-                }
+                document.getElementById("image-"+id).src = "{% static 'check.jpg' %}";
             }
+            else
+            {
+                document.getElementById("image-"+id).src = "{% static 'uncheck.jpg' %}";
+            }
+            if(result != true && result != false)
+            {
+                document.getElementById("p-"+id).innerHTML = String(result) + '/' + String(max_res);
+            }
+        }
     </script>
 {% endblock %}
 
@@ -31,12 +31,12 @@
         <table id='result_table'><tr><th width='40%'>Ваш ответ</th><th width='40%'>Правильный ответ</th><th></th></tr>
             {% for answer in answers %}
                 <tr><td>{{ answer.0 }}</td><td>{{ answer.1 }}</td>
-                    <td><img id="image-{{ forloop.counter }}"src=""/><p id="p-{{ forloop.counter }}"></p></td></tr>
+                    <td><img id="image-{{ forloop.counter }}" src=""/><p id="p-{{ forloop.counter }}"></p></td></tr>
                 <script>
                     {% if answer.3 %}
-                        set_result({{ answer.2 }}, {{ forloop.counter }}, {{ answer.3 }})
+                        set_result({{ answer.2 }}, {{ forloop.counter }}, {{ answer.3 }});
                     {% else %}
-                        set_result({{ answer.2 }}, {{ forloop.counter }}, 0)
+                        set_result({{ answer.2 }}, {{ forloop.counter }}, 0);
                     {% endif %}
                 </script>
             {% endfor %}
