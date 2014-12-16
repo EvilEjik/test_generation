@@ -38,7 +38,7 @@ def code_edit(request):
 
 
 def run_sql(query, return_answer=False):
-    if 'insert' in query.lower() or 'update' in query.lower() or 'delete' in query.lower() or 'drop' in query.lower():
+    if 'create' in query.lower() or 'insert' in query.lower() or 'update' in query.lower() or 'delete' in query.lower() or 'drop' in query.lower():
         print('Error!')
     else:
         cursor = connection.cursor()

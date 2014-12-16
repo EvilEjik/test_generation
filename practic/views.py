@@ -99,7 +99,8 @@ def add_sql_lesson(request):
                         query += ' ' + field.field_name + ' ' + field.data_type + ', '
                     query = query[0:-2]
                     query += ' );'
-                    run_sql(query)
+                    cursor = connection.cursor()
+                    cursor.execute(query)
                 return HttpResponseRedirect('/practic/sql/add_data/')
     else:
         return render(request, 'sql_add.html', {'lesson_form': lesson_form,
