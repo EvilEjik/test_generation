@@ -1,5 +1,5 @@
 from django.core.urlresolvers import reverse
-from django.shortcuts import redirect, get_object_or_404, render, render_to_response
+from django.shortcuts import redirect, get_object_or_404, render_to_response
 from django.contrib.auth import authenticate, login, logout, REDIRECT_FIELD_NAME
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import PasswordChangeForm
@@ -825,20 +825,21 @@ def profile_list(request, page=1, template_name='userena/profile_list.html',
 
 def student_results(request, username):
     user = request.user
-    if username != user.username:
+    if username != user.username and user.is_staff == False:
         return render_to_response('userena/user_results_list.html', {'error': True})
     else:
         results = []
-        pr_lesson_results = PracticalLessonResult.objects.filter(student=user)
+        current_user = get_object_or_404(User, username=username)
+        pr_lesson_results = PracticalLessonResult.objects.filter(student=current_user)
         for res in pr_lesson_results:
             results.append([PracticalLesson.objects.get(id=res.practical_lesson.id).name, res])
-        return render_to_response('userena/user_results_list.html', {'results': results, 'user': user,
+        return render_to_response('userena/user_results_list.html', {'results': results, 'username': username,
                                                                   'error': False})
 
 
 def practical_lesson_result(request, username, practical_lesson_result_id):
     user = request.user
-    if username != user.username:
+    if username != user.username and user.is_staff == False:
         return render_to_response('userena/practical_lesson_result.html', {'error': True})
     else:
         practical_lesson_res = PracticalLessonResult.objects.get(id=practical_lesson_result_id)
@@ -850,7 +851,7 @@ def practical_lesson_result(request, username, practical_lesson_result_id):
             questions = CodeQuestion.objects.filter(lesson=practical_lesson_res)
             for question in questions:
                 answer = CodeAnswer.objects.get(question=question)
-                answers.append([answer.result, question.answer, answer.is_true])
+                answers.append([answer.result, question.answer, answer.is_true, answer.id])
         else:
             questions = TheoryQuestion.objects.filter(lesson=practical_lesson_res)
             for question in questions:
@@ -872,7 +873,13 @@ def practical_lesson_result(request, username, practical_lesson_result_id):
                     my_answer = answer_elements[0].subject
                     correct_answer = question_elements[0].object
                 answers.append([my_answer, correct_answer, current_answer.result, current_answer.max])
-        return render_to_response('userena/practical_lesson_result.html', {'answers' : answers,
-                                                                           'result' : practical_lesson_res,
-                                                                           'name' : practical_lesson.name,
+        return render_to_response('userena/practical_lesson_result.html', {'answers': answers,
+                                                                           'username': username,
+                                                                           'result': practical_lesson_res,
+                                                                           'practical_lesson': practical_lesson,
                                                                            'error': False})
+
+
+def practical_lesson_code_answer(request, username, code_answer_id):
+    code_answer = get_object_or_404(CodeAnswer, id=code_answer_id)
+    return render_to_response('userena/code_answer.html', {'code_answer' : code_answer})

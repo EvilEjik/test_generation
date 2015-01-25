@@ -14,6 +14,7 @@
   <tr>
     <td><a href="{% url 'userena_profile_detail' profile.user.username %}"><img src="{{ profile.get_mugshot_url }}"></a></td>
     <td><a href="{% url 'userena_profile_detail' profile.user.username %}">{{ profile.user.username }}</a></td>
+    <td><a href="/accounts/{{profile.user.username}}/results/">Просмотр результатов практических занятий</a></td>
   </tr>
   {% endfor %}
 

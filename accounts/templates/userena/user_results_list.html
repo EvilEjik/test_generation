@@ -8,11 +8,11 @@
     {% if error == True %}
         <h2>Вы не можете просматривать чужие академические результаты!</h2>
     {% else %}
-        <h2>Академические успехи {{ user.username }}</h2>
+        <h2>Академические успехи {{ username }}</h2>
         <table>
             <tr><th>Название занятия</th><th>Результат</th><th>Дата</th></tr>
             {%  for result in results %}
-                <tr><td><a href="{% url 'practical_lesson_result' user.username result.1.id %}">{{ result.0 }}</a></td>
+                <tr><td><a href="{% url 'practical_lesson_result' username result.1.id %}">{{ result.0 }}</a></td>
                     <td>{{ result.1.result }}/{{ result.1.max }}</td>
                     <td>{{ result.1.date }}</td></tr>
             {% endfor %}

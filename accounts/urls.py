@@ -116,4 +116,7 @@ urlpatterns = patterns('',
     url(r'^(?P<username>[\.\w-]+)/(?P<practical_lesson_result_id>\d+)/$',
         userena_views.practical_lesson_result,
         name="practical_lesson_result"),
+    url(r'^(?P<username>[\.\w-]+)/code_answer/(?P<code_answer_id>\d+)/$',
+        userena_views.practical_lesson_code_answer,
+        name="practical_lesson_code_answer"),
 )

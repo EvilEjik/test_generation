@@ -1,3 +1,4 @@
 from django.contrib import admin
+from practic.models import PracticalLesson
 
-# Register your models here.
+admin.site.register(PracticalLesson)

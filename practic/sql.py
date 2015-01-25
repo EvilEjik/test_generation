@@ -1,6 +1,7 @@
 import string
 from itertools import cycle
 from random import sample, randint, choice
+from django.db import connection
 
 from practic.models import CodeQuestion, SQLTable, SQLField
 from main.views import run_sql
@@ -51,11 +52,11 @@ def sql_prepare(tables, question_type):
             if question_type == 'search':
                 where_part_error.append((selected_fields[0])[:-1] + choice(['<', '>', '!=']) + value + ' AND ')
         elif original_selected_fields[0].data_type == 'Varchar(255)':
-            value = str(choice(string.ascii_lowercase))
-            where_part.append((selected_fields[0])[:-1] + " LIKE '%" + value + "%' AND ")
-            where_part_text.append((selected_fields[0])[:-1] + ' содержит в себе  ' + value + ' ')
+            value = str(choice(list(map(chr, range(1072, 1103)))))
+            where_part.append((selected_fields[0])[:-1] + " LIKE \\'" +"%" + value + "%" + "\\' AND ")
+            where_part_text.append((selected_fields[0])[:-1] + ' равно  ' + value + ' ')
             if question_type == 'search':
-                where_part_error.append((selected_fields[0])[:-1] + " LICE " + value + " AND ")
+                where_part_error.append((selected_fields[0])[:-1] + " == " + value + " AND ")
         elif original_selected_fields[0].data_type == 'Boolean':
             value = str(choice([True, False]))
             where_part.append((selected_fields[0])[:-1] + '=' + value + ' AND ')

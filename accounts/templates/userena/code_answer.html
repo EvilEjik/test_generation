@@ -1,0 +1,15 @@
+{% extends "test_generator_base.html" %}
+
+{% block content %}
+    <h2>Ответ на практическое задание</h2>
+    <table>
+        <tr>
+            <td>Решение:</td>
+            <td>{{ code_answer.answer }}</td>
+        </tr>
+        <tr>
+            <td>Правильный?</td>
+            <td>{{ code_answer.is_true }}</td>
+        </tr>
+    </table>
+{% endblock %}

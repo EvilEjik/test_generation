@@ -9,10 +9,6 @@
             {
                 document.getElementById("image-"+id).src = "{% static 'check.jpg' %}";
             }
-            else
-            {
-                document.getElementById("image-"+id).src = "{% static 'uncheck.jpg' %}";
-            }
             if(result != true && result != false)
             {
                 document.getElementById("p-"+id).innerHTML = String(result) + '/' + String(max_res);
@@ -26,14 +22,18 @@
     {% if error == True %}
         <h2>Вы не можете просматривать чужие академические результаты!</h2>
     {% else %}
-        <h2>Результат практического занятия "{{ name }}"</h2>
+        <h2>Результат практического занятия "{{ practical_lesson.name }}"</h2>
         <h4>Дата: {{ result.date }}</h4>
         <table id='result_table'><tr><th width='40%'>Ваш ответ</th><th width='40%'>Правильный ответ</th><th></th></tr>
             {% for answer in answers %}
                 <tr><td>{{ answer.0 }}</td><td>{{ answer.1 }}</td>
-                    <td><img id="image-{{ forloop.counter }}" src=""/><p id="p-{{ forloop.counter }}"></p></td></tr>
+                    <td><img id="image-{{ forloop.counter }}" src="{% static 'uncheck.jpg' %}"/><p id="p-{{ forloop.counter }}"></p></td>
+                    {% if practical_lesson.matrixpracticallesson or practical_lesson.sqlpracticallesson %}
+                        <td><a href="{% url 'practical_lesson_code_answer' username answer.3 %}">Просмотр решения</a></td>
+                    {% endif %}
+                </tr>
                 <script>
-                    {% if answer.3 %}
+                    {% if answer.2 != True or answer.2 != False %}
                         set_result({{ answer.2 }}, {{ forloop.counter }}, {{ answer.3 }});
                     {% else %}
                         set_result({{ answer.2 }}, {{ forloop.counter }}, 0);

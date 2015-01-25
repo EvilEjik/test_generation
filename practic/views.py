@@ -181,7 +181,8 @@ def code_solve(request, practical_lesson_id):
         answers_list = request.POST.getlist('values[]')
 
         practical_lesson = get_object_or_404(PracticalLesson, id=practical_lesson_id)
-        practical_lesson_result = get_object_or_404(PracticalLessonResult, practical_lesson=practical_lesson)
+        practical_lesson_result = get_object_or_404(PracticalLessonResult, practical_lesson=practical_lesson,
+                                                    student_id=request.user.id)
         questions = CodeQuestion.objects.filter(lesson=practical_lesson_result)
         practical_lesson_result.max = questions.count()
         practical_lesson_result.date = datetime.now()
@@ -229,7 +230,8 @@ def code_solve(request, practical_lesson_id):
 def theory_solve(request, practical_lesson_id):
     if request.POST:
         practical_lesson = get_object_or_404(PracticalLesson, id=practical_lesson_id)
-        practical_lesson_result = get_object_or_404(PracticalLessonResult, practical_lesson=practical_lesson)
+        practical_lesson_result = get_object_or_404(PracticalLessonResult, practical_lesson=practical_lesson,
+                                                    student_id=request.user.id)
         questions = TheoryQuestion.objects.filter(lesson=practical_lesson_result)
         practical_lesson_result.date = datetime.now()
 
